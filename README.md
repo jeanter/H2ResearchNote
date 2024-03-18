@@ -90,3 +90,38 @@ page id: 466,page_type: org.h2.mvstore.Page$Leaf;keys: [13, 14, 15, 16]<br />
 
 ### 删除key 1后  ，再添加1 
 ![](https://github.com/jeanter/H2ResearchNote/blob/main/breee_add1.jpg)
+
+
+## 1.3 H2 CursorPos CursorPos.traverseDown(rootPage, key)
+
+        CursorPos<K,V> pos = CursorPos.traverseDown(rootPage, key);
+      /** 此方法通过rootPage查找到指定key所在的leafPage,每一次进入到下个节点，通过CursorPos保持父节点和当前节点，
+          子节点的index,从而保存整个查找路径上的全部节点路径信息
+  
+     * Searches for a given key and creates a breadcrumb trail through a B-tree
+     * rooted at a given Page. Resulting path starts at "insertion point" for a
+     * given key and goes back to the root.
+              * 搜索给定的键并通过 B 树创建breadcrumb路径
+              *从根节点到指定key所在的page。 结果路径从“插入点”开始
+              * 给定key并返回到根。
+      * * Instance代表链表中的一个节点，它追踪路径
+                     * 从叶节点中的特定（目标）键一直到根
+                   *（自下而上的路径）。
+     *
+     * @param page      root of the tree
+     * @param key       the key to search for
+     * @return head of the CursorPos chain (insertion point)
+     */
+    static <K,V> CursorPos<K,V> traverseDown(Page<K,V> page, K key) {
+        CursorPos<K,V> cursorPos = null;
+        while (!page.isLeaf()) {
+            int index = page.binarySearch(key) + 1;
+            if (index < 0) {
+                index = -index;
+            }
+            //  三个参数  page表示当前到达的，index ,index表示下一级节点在page叶子节点的索引, cursorPos表示父节点
+            cursorPos = new CursorPos<>(page, index, cursorPos);
+            page = page.getChildPage(index);
+        }
+        return new CursorPos<>(page, page.binarySearch(key), cursorPos);
+    }
